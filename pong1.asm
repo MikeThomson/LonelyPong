@@ -46,6 +46,7 @@ PADDLESPEED	   = $06
 ;;;;;;;;;;;;;;;;;;
 
 ; resetPPU 
+; affects A
 ; Resets the PPU and sets the address to XXYY
 resetPPU .macro
   LDA $2002             ; read PPU status to reset the high/low latch
@@ -55,7 +56,21 @@ resetPPU .macro
   STA $2006             ; write the low byte of $3F00 address
   .endm
 
+; drawBackgroundString
+; affects A, X
+; Draws a byte string starting at \1 of \2 bytes onto the background starting at \3\4
+drawBackgroundString .macro
+  resetPPU \3, \4
+  LDX #$00
+  
+drawLoop\@:
+  LDA \1, x        ; load data from address (palette + the value in x)
+  STA $2007             ; write to P to LoadPalettesLoop if compare was Not Equal to zeroPU
+  INX                   ; X = X + 1
+  CPX \2              ; / copy X bytes
+  BNE drawLoop\@  ; Branch
 
+  .endm
 
   .bank 0
   .org $C000 
@@ -298,17 +313,7 @@ MoveBallLeft:
   STA gamestate
   
   ;; draw game over
-DrawGameOver:
-  resetPPU $21,$AA
-  LDX #$00
-  
-DrawGameOverLoop:
-  LDA str_GameOver, x        ; load data from address (palette + the value in x)
-  STA $2007             ; write to PPU
-  INX                   ; X = X + 1
-  CPX #$09              ; Compare X to hex $10, decimal 16 - copying 16 bytes = 4 sprites
-  BNE DrawGameOverLoop  ; Branch to LoadPalettesLoop if compare was Not Equal to zero
-  
+  drawBackgroundString str_GameOver, #$09, $21, $AA
   
   ;;  turn screen on
   LDA #%00011110   ; enable sprites, enable background, no clipping on left side
@@ -488,30 +493,8 @@ DrawScore:
   RTS
  
 DrawTitle:
-  resetPPU $21, $08
-  LDX #$00
-  
-DrawTitleLoop:
-  LDA str_Welcome, x        ; load data from address (palette + the value in x)
-  STA $2007             ; write to PPU
-  INX                   ; X = X + 1
-  CPX #$0F              ; Compare X to hex $10, decimal 16 - copying 16 bytes = 4 sprites
-  BNE DrawTitleLoop  ; Branch to LoadPalettesLoop if compare was Not Equal to zero
-  
-  JSR DrawStart ; call for now, might want to make start flash
-  RTS
-  
-DrawStart:
-  resetPPU $21, $AA
-  LDX #$00
-  
-DrawStartLoop:
-  LDA str_PressStart, x        ; load data from address (palette + the value in x)
-  STA $2007             ; write to PPU
-  INX                   ; X = X + 1
-  CPX #$0B              ; Compare X to hex $10, decimal 16 - copying 16 bytes = 4 sprites
-  BNE DrawStartLoop  ; Branch to LoadPalettesLoop if compare was Not Equal to zero
-  
+  drawBackgroundString str_Welcome, #$0F, $21, $08
+  drawBackgroundString str_PressStart, #$0B, $21, $AA ; call for now, might want to make start flash
   RTS
   
 ClearBackground:
