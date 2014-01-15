@@ -41,6 +41,19 @@ PADDLESPEED	   = $06
 
 ;;;;;;;;;;;;;;;;;;
 
+;;;;;;;;;;;;;;;;;;
+;; MACROS
+;;;;;;;;;;;;;;;;;;
+
+; resetPPU 
+; Resets the PPU and sets the address to XXYY
+resetPPU .macro
+  LDA $2002             ; read PPU status to reset the high/low latch
+  LDA #\1
+  STA $2006             ; write the high byte of $3F00 address
+  LDA #\2
+  STA $2006             ; write the low byte of $3F00 address
+  .endm
 
 
 
@@ -82,11 +95,7 @@ vblankwait2:      ; Second wait for vblank, PPU is ready after this
 
 
 LoadPalettes:
-  LDA $2002             ; read PPU status to reset the high/low latch
-  LDA #$3F
-  STA $2006             ; write the high byte of $3F00 address
-  LDA #$00
-  STA $2006             ; write the low byte of $3F00 address
+  resetPPU $3F, $00
   LDX #$00              ; start out at 0
 LoadPalettesLoop:
   LDA palette, x        ; load data from address (palette + the value in x)
@@ -290,11 +299,7 @@ MoveBallLeft:
   
   ;; draw game over
 DrawGameOver:
-  LDA $2002             ; read PPU status to reset the high/low latch
-  LDA #$21
-  STA $2006             ; write the high byte of $2000 address
-  LDA #$AA
-  STA $2006             ; write the low byte of $2000 address
+  resetPPU $21,$AA
   LDX #$00
   
 DrawGameOverLoop:
@@ -474,31 +479,16 @@ UpdateSprites:
 
 DrawScore:
   ;;draw score on screen using background tiles
-  ;;or using many sprites
-  LDA $2002             ; read PPU status to reset the high/low latch
-  LDA #$20
-  STA $2006             ; write the high byte of $2000 address
-  LDA #$42
-  STA $2006             ; write the low byte of $2000 address
+  resetPPU $20, $42
   
   ; draw score offset from 0 tile (which is $00, so this is easy)
   LDA score1
   STA $2007
-  
-  LDA $2002             ; read PPU status to reset the high/low latch
-  LDA #$20
-  STA $2006             ; write the high byte of $2000 address
-  LDA #$5C
-  STA $2006             ; write the low byte of $2000 address
 
   RTS
  
 DrawTitle:
-  LDA $2002             ; read PPU status to reset the high/low latch
-  LDA #$21
-  STA $2006             ; write the high byte of $2000 address
-  LDA #$08
-  STA $2006             ; write the low byte of $2000 address
+  resetPPU $21, $08
   LDX #$00
   
 DrawTitleLoop:
@@ -512,11 +502,7 @@ DrawTitleLoop:
   RTS
   
 DrawStart:
-  LDA $2002             ; read PPU status to reset the high/low latch
-  LDA #$21
-  STA $2006             ; write the high byte of $2000 address
-  LDA #$AA
-  STA $2006             ; write the low byte of $2000 address
+  resetPPU $21, $AA
   LDX #$00
   
 DrawStartLoop:
@@ -529,11 +515,7 @@ DrawStartLoop:
   RTS
   
 ClearBackground:
-  LDA $2002             ; read PPU status to reset the high/low latch
-  LDA #$20
-  STA $2006             ; write the high byte of $2000 address
-  LDA #$00
-  STA $2006             ; write the low byte of $2000 address
+  resetPPU $20, $00
   LDY #$00
   
 LoadBackgroundOuterLoop:
