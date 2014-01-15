@@ -19,11 +19,8 @@ ballright  .rs 1  ; 1 = ball moving right
 ballspeedx .rs 1  ; ball horizontal speed per frame
 ballspeedy .rs 1  ; ball vertical speed per frame
 paddle1ytop   .rs 1  ; player 1 paddle top vertical position
-paddle2ybot   .rs 1  ; player 2 paddle bottom vertical position
 buttons1   .rs 1  ; player 1 gamepad buttons, one bit per button
-buttons2   .rs 1  ; player 2 gamepad buttons, one bit per button
 score1     .rs 1  ; player 1 score, 0-15
-score2     .rs 1  ; player 2 score, 0-15
 
 
 ;; DECLARE SOME CONSTANTS HERE
@@ -152,7 +149,6 @@ ScoreDone:
 
 
   JSR ReadController1  ;;get the current button data for player 1
-  JSR ReadController2  ;;get the current button data for player 2
   
 GameEngine:  
   LDA gamestate
@@ -568,23 +564,7 @@ ReadController1Loop:
   DEX
   BNE ReadController1Loop
   RTS
-  
-ReadController2:
-  LDA #$01
-  STA $4016
-  LDA #$00
-  STA $4016
-  LDX #$08
-ReadController2Loop:
-  LDA $4017
-  LSR A            ; bit0 -> Carry
-  ROL buttons2     ; bit0 <- Carry
-  DEX
-  BNE ReadController2Loop
-  RTS  
-  
-  
-    
+
         
 ;;;;;;;;;;;;;;  
   
@@ -596,13 +576,6 @@ palette:
   .db $22,$29,$1A,$0F,  $22,$36,$17,$0F,  $22,$30,$21,$0F,  $22,$27,$17,$0F   ;;background palette
   .db $22,$1C,$15,$14,  $22,$02,$38,$3C,  $22,$1C,$15,$14,  $22,$02,$38,$3C   ;;sprite palette
 
-sprites:
-     ;vert tile attr horiz
-  .db $80, $32, $00, $80   ;sprite 0
-  .db $80, $33, $00, $88   ;sprite 1
-  .db $88, $34, $00, $80   ;sprite 2
-  .db $88, $35, $00, $88   ;sprite 3
-  
 ;strings
 str_Welcome:
   .db $20, $0E, $15, $0C, $18, $16, $0E, $24 ; "Welcome "
