@@ -23,6 +23,8 @@ buttons1   .rs 1  ; player 1 gamepad buttons, one bit per button
 score1     .rs 1  ; score 1s digit
 score10		.rs 1 ; scores 10s digit
 score100    .rs 1 ; score 100s digit
+ballHit		.rs 1 ; to make sure you only get one point per hit
+
 
 
 ;; DECLARE SOME CONSTANTS HERE
@@ -37,7 +39,7 @@ LEFTWALL       = $04
   
 ;PADDLE1X       = $08  ; horizontal position for paddles, doesnt move
 PADDLE1X       = $1F
-PADDLE1XFRONT  = $1F  ; horizontal position for paddles, doesnt move
+PADDLE1XFRONT  = $28  ; horizontal position for paddles, doesnt move
 PADDLE2X       = $F0
 PADDLESPEED	   = $06
 
@@ -289,6 +291,8 @@ MoveBallRight:
   STA ballright
   LDA #$01
   STA ballleft         ;;bounce, ball now moving left
+  LDA #$0
+  STA ballHit ; reset multi hit prevention
   ;;in real game, give point to player 1, reset ball
 MoveBallRightDone:
 
@@ -397,6 +401,11 @@ CheckPaddleCollision:
   LDA ballx
   CMP #PADDLE1XFRONT
   BCS CheckPaddleCollisionDone      ;;if ball x > left wall, still on screen, skip next section
+  
+  ;;if ball x > paddle1x 
+  LDA ballx
+  CMP #PADDLE1X
+  BCC CheckPaddleCollisionDone      ;; the ball is past the paddle
 
   ;;  if ball y < paddle y top - over the paddle
   LDA bally
@@ -415,7 +424,12 @@ CheckPaddleCollision:
   LDA #$00
   STA ballleft         ;;bounce, ball now moving right
   
-  ;; get a point for bouncing the ball
+  ;; get a point for bouncing the ball, if it wasn't already given
+  LDA ballHit
+  CMP #$0
+  BNE CheckPaddleCollisionDone
+  LDA #$1
+  STA ballHit
   JSR IncScore
   
 CheckPaddleCollisionDone:
@@ -426,6 +440,10 @@ CheckPaddleCollisionDone:
  
  
 UpdateSprites:
+  LDA gamestate
+  CMP #STATEPLAYING
+  BNE UpdateSpritesDone
+  
   LDA bally  ;;update all ball sprite info
   STA $0200
   
@@ -437,6 +455,7 @@ UpdateSprites:
   
   LDA ballx
   STA $0203
+  
   
   ;;update paddle sprites
   LDA paddle1ytop
@@ -480,6 +499,8 @@ UpdateSprites:
   STA $0212
   LDA #PADDLE1X
   STA $0213
+
+UpdateSpritesDone:
   
   RTS
   
