@@ -20,7 +20,9 @@ ballspeedx .rs 1  ; ball horizontal speed per frame
 ballspeedy .rs 1  ; ball vertical speed per frame
 paddle1ytop   .rs 1  ; player 1 paddle top vertical position
 buttons1   .rs 1  ; player 1 gamepad buttons, one bit per button
-score1     .rs 1  ; player 1 score, 0-15
+score1     .rs 1  ; score 1s digit
+score10		.rs 1 ; scores 10s digit
+score100    .rs 1 ; score 100s digit
 
 
 ;; DECLARE SOME CONSTANTS HERE
@@ -414,7 +416,7 @@ CheckPaddleCollision:
   STA ballleft         ;;bounce, ball now moving right
   
   ;; get a point for bouncing the ball
-  INC score1
+  JSR IncScore
   
 CheckPaddleCollisionDone:
 
@@ -487,6 +489,10 @@ DrawScore:
   resetPPU $20, $42
   
   ; draw score offset from 0 tile (which is $00, so this is easy)
+  LDA score100
+  STA $2007
+  LDA score10
+  STA $2007
   LDA score1
   STA $2007
 
@@ -528,6 +534,33 @@ ReadController1Loop:
   ROL buttons1     ; bit0 <- Carry
   DEX
   BNE ReadController1Loop
+  RTS
+  
+IncScore:
+IncOnes:
+  LDA score1     ; load the lowest digit of the number
+  CLC 
+  ADC #$01          ; add one
+  STA score1
+  CMP #$0A          ; check if it overflowed, now equals 10
+  BNE IncDone       ; if there was no overflow, all done
+IncTens:
+  LDA #$00
+  STA score1     ; wrap digit to 0
+  LDA score10     ; load the next digit
+  CLC 
+  ADC #$01          ; add one, the carry from previous digit
+  STA score10
+  CMP #$0A          ; check if it overflowed, now equals 10
+  BNE IncDone       ; if there was no overflow, all done
+IncHundreds:
+  LDA #$00
+  STA score10     ; wrap digit to 0
+  LDA score100 ; load the next digit
+  CLC 
+  ADC #$01          ; add one, the carry from previous digit
+  STA score100
+IncDone:
   RTS
 
         
