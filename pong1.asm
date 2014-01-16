@@ -235,6 +235,8 @@ EngineTitle:
   
   LDA #$00
   STA score1
+  STA score10
+  STA score100
   
   LDA #100
   STA paddle1ytop
